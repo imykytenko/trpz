@@ -60,6 +60,7 @@ public class PlaylistController{
         playlistService.removeSongFromPlaylist(playlistId, songId);
         return ResponseEntity.noContent().build();
     }
+
     @GetMapping("/{id}/songs")
     public ResponseEntity<List<Song>> getSongsInPlaylist(@PathVariable Long id) {
         List<Song> songsInPlaylist = playlistService.getSongsInPlaylist(id);
@@ -69,5 +70,17 @@ public class PlaylistController{
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @PostMapping("/{playlistId}/save-state")
+    public ResponseEntity<Void> savePlaylistState(@PathVariable Long playlistId) {
+        playlistService.savePlaylistState(playlistId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{playlistId}/restore-state/{index}")
+    public ResponseEntity<Void> restorePlaylistState(@PathVariable Long playlistId, @PathVariable int index) {
+        playlistService.restorePlaylistState(playlistId, index);
+        return ResponseEntity.ok().build();
     }
 }

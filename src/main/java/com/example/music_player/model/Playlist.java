@@ -5,6 +5,7 @@ import com.example.music_player.iterator.Iterator;
 import java.util.*;
 
 import com.example.music_player.iterator.SongIterator;
+import com.example.music_player.memento.PlaylistMemento;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -33,4 +34,13 @@ public class Playlist implements Aggregate<Song> {
     public Iterator<Song> createIterator() {
         return new SongIterator(songs);
     }
+
+    public PlaylistMemento createMemento() {
+        return new PlaylistMemento(this.songs);
+    }
+
+    public void restoreFromMemento(PlaylistMemento memento) {
+        this.songs = memento.getSavedSongs();
+    }
+
 }

@@ -14,4 +14,6 @@ public interface PlaylistService {
     void addSongToPlaylist(Long playlistId, Long songId);
     void removeSongFromPlaylist(Long playlistId, Long songId);
     List<Song> getSongsInPlaylist(Long playlistId);
+    void savePlaylistState(Long playlistId);
+    void restorePlaylistState(Long playlistId, int mementoIndex);
 }
