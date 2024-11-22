@@ -1,13 +1,11 @@
 package com.example.music_player.controller;
 
-import com.example.music_player.controller.dto.SongCreationDto;
 import com.example.music_player.controller.dto.SongDto;
 import com.example.music_player.controller.mapper.SongMapper;
+import com.example.music_player.facade.MusicPlayerFacade;
 import com.example.music_player.model.Song;
-import com.example.music_player.service.SongService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,7 +20,7 @@ import java.util.List;
 public class SongController {
 
     @Autowired
-    private SongService songService;
+    private MusicPlayerFacade musicPlayerFacade;
 
     private final SongMapper songMapper;
 
@@ -38,23 +36,24 @@ public class SongController {
         song.setDuration(duration);
         song.setFormat(format);
         song.setFileData(file.getBytes());
-        song = songService.add(song);
+        song = musicPlayerFacade.addSong(song);
         return ResponseEntity.ok(song);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<SongDto> findById(@PathVariable long id) {
-        return ResponseEntity.of(songService.findById(id).map(songMapper::toDto));
+        return ResponseEntity.of(musicPlayerFacade.findSongById(id).map(songMapper::toDto));
     }
 
     @GetMapping
     public List<SongDto> findAll() {
-        return songService.findAll().stream().map(songMapper::toDto).toList();
+        return musicPlayerFacade.getAllSongs().stream().map(songMapper::toDto).toList();
     }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteById(@PathVariable Long id) {
-        songService.deleteById(id);
+        musicPlayerFacade.deleteSongById(id);
         return ResponseEntity.noContent().build();
     }
 }

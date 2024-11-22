@@ -1,8 +1,8 @@
 package com.example.music_player.controller;
 
+import com.example.music_player.facade.MusicPlayerFacade;
 import com.example.music_player.model.Playlist;
 import com.example.music_player.model.Song;
-import com.example.music_player.service.PlaylistService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,57 +13,52 @@ import java.util.List;
 @RestController
 @RequestMapping("/playlists")
 public class PlaylistController{
-
-    private final PlaylistService playlistService;
-
     @Autowired
-    public PlaylistController(PlaylistService playlistService) {
-        this.playlistService = playlistService;
-    }
+    private MusicPlayerFacade musicPlayerFacade;
 
     @PostMapping
     public ResponseEntity<Playlist> createPlaylist(@RequestBody Playlist playlist) {
-        return new ResponseEntity<>(playlistService.createPlaylist(playlist), HttpStatus.CREATED);
+        return new ResponseEntity<>(musicPlayerFacade.createPlaylist(playlist), HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Playlist> getPlaylistById(@PathVariable Long id) {
-        Playlist playlist = playlistService.getPlaylistById(id);
+        Playlist playlist = musicPlayerFacade.getPlaylistById(id);
         return playlist != null ? ResponseEntity.ok(playlist) : ResponseEntity.notFound().build();
     }
 
     @GetMapping
     public ResponseEntity<List<Playlist>> getAllPlaylists() {
-        return ResponseEntity.ok(playlistService.getAllPlaylists());
+        return ResponseEntity.ok(musicPlayerFacade.getAllPlaylists());
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Playlist> updatePlaylist(@PathVariable Long id, @RequestBody Playlist playlist) {
-        Playlist updatedPlaylist = playlistService.updatePlaylist(id, playlist);
+        Playlist updatedPlaylist = musicPlayerFacade.updatePlaylist(id, playlist);
         return updatedPlaylist != null ? ResponseEntity.ok(updatedPlaylist) : ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePlaylist(@PathVariable Long id) {
-        playlistService.deletePlaylist(id);
+        musicPlayerFacade.deletePlaylist(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{playlistId}/songs/{songId}")
     public ResponseEntity<Void> addSongToPlaylist(@PathVariable Long playlistId, @PathVariable Long songId) {
-        playlistService.addSongToPlaylist(playlistId, songId);
+        musicPlayerFacade.addSongToPlaylist(playlistId, songId);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @DeleteMapping("/{playlistId}/songs/{songId}")
     public ResponseEntity<Void> removeSongFromPlaylist(@PathVariable Long playlistId, @PathVariable Long songId) {
-        playlistService.removeSongFromPlaylist(playlistId, songId);
+        musicPlayerFacade.removeSongFromPlaylist(playlistId, songId);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}/songs")
     public ResponseEntity<List<Song>> getSongsInPlaylist(@PathVariable Long id) {
-        List<Song> songsInPlaylist = playlistService.getSongsInPlaylist(id);
+        List<Song> songsInPlaylist = musicPlayerFacade.getSongsInPlaylist(id);
 
         if (songsInPlaylist != null) {
             return ResponseEntity.ok(songsInPlaylist);
@@ -74,13 +69,13 @@ public class PlaylistController{
 
     @PostMapping("/{playlistId}/save-state")
     public ResponseEntity<Void> savePlaylistState(@PathVariable Long playlistId) {
-        playlistService.savePlaylistState(playlistId);
+        musicPlayerFacade.savePlaylistState(playlistId);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{playlistId}/restore-state/{index}")
     public ResponseEntity<Void> restorePlaylistState(@PathVariable Long playlistId, @PathVariable int index) {
-        playlistService.restorePlaylistState(playlistId, index);
+        musicPlayerFacade.restorePlaylistState(playlistId, index);
         return ResponseEntity.ok().build();
     }
 }
