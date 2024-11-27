@@ -5,6 +5,8 @@ import com.example.music_player.command.Command;
 import com.example.music_player.command.PlaylistCommandInvoker;
 import com.example.music_player.command.RemoveSongCommand;
 import com.example.music_player.iterator.Iterator;
+import com.example.music_player.memento.PlaylistHistory;
+import com.example.music_player.memento.PlaylistMemento;
 import com.example.music_player.model.Playlist;
 import com.example.music_player.model.Song;
 import com.example.music_player.repository.PlaylistRepository;
@@ -14,7 +16,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class PlaylistServiceImpl implements PlaylistService {
@@ -23,6 +27,7 @@ public class PlaylistServiceImpl implements PlaylistService {
     @Autowired
     private final SongRepository songRepository;
     private final PlaylistCommandInvoker commandInvoker = new PlaylistCommandInvoker();
+    private final Map<Long, PlaylistHistory> playlistHistories = new HashMap<>();
 
     @Autowired
     public PlaylistServiceImpl(PlaylistRepository playlistRepository, SongRepository songRepository) {
@@ -58,6 +63,7 @@ public class PlaylistServiceImpl implements PlaylistService {
     public void deletePlaylist(Long id) {
         playlistRepository.deleteById(id);
     }
+
     @Override
     public void addSongToPlaylist(Long playlistId, Long songId) {
         Playlist playlist = playlistRepository.findById(playlistId).orElse(null);
@@ -79,6 +85,7 @@ public class PlaylistServiceImpl implements PlaylistService {
             commandInvoker.executeCommand();
         }
     }
+
     @Override
     public List<Song> getSongsInPlaylist(Long playlistId) {
         Playlist playlist = getPlaylistById(playlistId);
@@ -95,5 +102,28 @@ public class PlaylistServiceImpl implements PlaylistService {
         }
 
         return songsInPlaylist;
+    }
+
+    @Override
+    public void savePlaylistState(Long playlistId) {
+        Playlist playlist = getPlaylistById(playlistId);
+
+        if (playlist != null) {
+            PlaylistMemento memento = playlist.createMemento();
+            playlistHistories.putIfAbsent(playlistId, new PlaylistHistory());
+            playlistHistories.get(playlistId).addMemento(memento);
+        }
+    }
+
+    @Override
+    public void restorePlaylistState(Long playlistId, int mementoIndex) {
+        Playlist playlist = getPlaylistById(playlistId);
+
+        if (playlist != null) {
+            PlaylistHistory history = playlistHistories.get(playlistId);
+            PlaylistMemento memento = history.getMemento(mementoIndex);
+            playlist.restoreFromMemento(memento);
+            playlistRepository.save(playlist);
+        }
     }
 }
