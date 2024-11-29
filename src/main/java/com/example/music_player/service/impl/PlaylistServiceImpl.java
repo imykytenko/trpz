@@ -12,6 +12,9 @@ import com.example.music_player.model.Song;
 import com.example.music_player.repository.PlaylistRepository;
 import com.example.music_player.repository.SongRepository;
 import com.example.music_player.service.PlaylistService;
+import com.example.music_player.visitor.Element;
+import com.example.music_player.visitor.MusicPlayer;
+import com.example.music_player.visitor.StatisticsVisitor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,14 +24,14 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class PlaylistServiceImpl implements PlaylistService {
+public class PlaylistServiceImpl implements PlaylistService{
     @Autowired
     private final PlaylistRepository playlistRepository;
     @Autowired
     private final SongRepository songRepository;
     private final PlaylistCommandInvoker commandInvoker = new PlaylistCommandInvoker();
     private final Map<Long, PlaylistHistory> playlistHistories = new HashMap<>();
-
+    private final StatisticsVisitor statisticsVisitor = new StatisticsVisitor();
     @Autowired
     public PlaylistServiceImpl(PlaylistRepository playlistRepository, SongRepository songRepository) {
         this.playlistRepository = playlistRepository;
@@ -126,4 +129,17 @@ public class PlaylistServiceImpl implements PlaylistService {
             playlistRepository.save(playlist);
         }
     }
+    @Override
+    public void calculateStatistics(Long playlistId) {
+        Playlist playlist = getPlaylistById(playlistId);
+
+        if (playlist != null) {
+            List<Element> elements = new ArrayList<>();
+            elements.add(playlist);
+            MusicPlayer musicPlayer = new MusicPlayer(elements);
+
+            musicPlayer.acceptVisitor(statisticsVisitor);
+        }
+    }
+
 }

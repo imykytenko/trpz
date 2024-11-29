@@ -16,4 +16,5 @@ public interface PlaylistService {
     List<Song> getSongsInPlaylist(Long playlistId);
     void savePlaylistState(Long playlistId);
     void restorePlaylistState(Long playlistId, int mementoIndex);
+    void calculateStatistics(Long playlistId);
 }
