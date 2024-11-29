@@ -75,4 +75,8 @@ public class MusicPlayerFacade {
     public void restorePlaylistState(Long playlistId, int mementoIndex) {
         playlistService.restorePlaylistState(playlistId, mementoIndex);
     }
+
+    public void calculatePlaylistStatistics(Long playlistId) {
+        playlistService.calculateStatistics(playlistId);
+    }
 }

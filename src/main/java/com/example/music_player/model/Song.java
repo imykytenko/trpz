@@ -1,5 +1,7 @@
 package com.example.music_player.model;
 
+import com.example.music_player.visitor.Element;
+import com.example.music_player.visitor.Visitor;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -7,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-public class Song {
+public class Song implements Element {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,4 +27,10 @@ public class Song {
     private byte[] fileData;
 
     private String format;
+
+
+    @Override
+    public void accept(Visitor visitor) {
+        visitor.visit(this);
+    }
 }

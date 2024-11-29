@@ -6,6 +6,8 @@ import java.util.*;
 
 import com.example.music_player.iterator.SongIterator;
 import com.example.music_player.memento.PlaylistMemento;
+import com.example.music_player.visitor.Element;
+import com.example.music_player.visitor.Visitor;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,7 +15,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-public class Playlist implements Aggregate<Song> {
+public class Playlist implements Aggregate<Song>, Element {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,4 +45,11 @@ public class Playlist implements Aggregate<Song> {
         this.songs = memento.getSavedSongs();
     }
 
+    @Override
+    public void accept(Visitor visitor) {
+        visitor.visit(this);
+        for (Song song : songs) {
+            song.accept(visitor);
+        }
+    }
 }
