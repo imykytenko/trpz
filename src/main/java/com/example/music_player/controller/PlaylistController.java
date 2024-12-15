@@ -78,4 +78,9 @@ public class PlaylistController{
         musicPlayerFacade.restorePlaylistState(playlistId, index);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/{playlistId}/statistics")
+    public void calculateStatistics(@PathVariable Long playlistId) {
+        musicPlayerFacade.calculatePlaylistStatistics(playlistId);
+    }
 }
