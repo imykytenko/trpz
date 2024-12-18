@@ -7,6 +7,7 @@ import com.example.music_player.service.SongService;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 @Component
 public class MusicPlayerFacade {
@@ -56,6 +57,10 @@ public class MusicPlayerFacade {
         playlistService.deletePlaylist(id);
     }
 
+    public List<Song> getSongsInPlaylist(Long playlistId) {
+        return playlistService.getSongsInPlaylist(playlistId);
+    }
+
     public void addSongToPlaylist(Long playlistId, Long songId) {
         playlistService.addSongToPlaylist(playlistId, songId);
     }
@@ -64,19 +69,12 @@ public class MusicPlayerFacade {
         playlistService.removeSongFromPlaylist(playlistId, songId);
     }
 
-    public List<Song> getSongsInPlaylist(Long playlistId) {
-        return playlistService.getSongsInPlaylist(playlistId);
+    public Song getNextSong(Long playlistId) {
+        return playlistService.getNextSong(playlistId);
     }
 
-    public void savePlaylistState(Long playlistId) {
-        playlistService.savePlaylistState(playlistId);
+    public Map<String, Object> calculateStatistics(Long playlistId) {
+        return playlistService.calculateStatistics(playlistId);
     }
 
-    public void restorePlaylistState(Long playlistId, int mementoIndex) {
-        playlistService.restorePlaylistState(playlistId, mementoIndex);
-    }
-
-    public void calculatePlaylistStatistics(Long playlistId) {
-        playlistService.calculateStatistics(playlistId);
-    }
 }

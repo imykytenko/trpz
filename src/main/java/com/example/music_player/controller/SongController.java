@@ -11,12 +11,15 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 @RestController
 @RequestMapping("/songs")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {"http://localhost:5173"})
 public class SongController {
 
     @Autowired
@@ -25,19 +28,32 @@ public class SongController {
     private final SongMapper songMapper;
 
     @PostMapping("/add")
-    public ResponseEntity<Song> addSong(@RequestParam("title") String title,
-                                        @RequestParam("artist") String artist,
-                                        @RequestParam("duration") Integer duration,
-                                        @RequestParam("format") String format,
-                                        @RequestParam("file") MultipartFile file) throws IOException {
+    public ResponseEntity<SongDto> addSong(@RequestParam("title") String title,
+                                           @RequestParam("artist") String artist,
+                                           @RequestParam("duration") Integer duration,
+                                           @RequestParam("format") String format,
+                                           @RequestParam("file") MultipartFile file) throws IOException {
+        String fileUrl = uploadFile(file);
         Song song = new Song();
         song.setTitle(title);
         song.setArtist(artist);
         song.setDuration(duration);
         song.setFormat(format);
-        song.setFileData(file.getBytes());
+        song.setFileUrl(fileUrl);
+
         song = musicPlayerFacade.addSong(song);
-        return ResponseEntity.ok(song);
+        return ResponseEntity.ok(songMapper.toDto(song));
+    }
+
+    private String uploadFile(MultipartFile file) throws IOException {
+        String uploadDir = System.getProperty("user.dir") + "/songs";
+        String fileName = file.getOriginalFilename();
+        Path path = Paths.get(uploadDir, fileName);
+
+        Files.createDirectories(path.getParent());
+        file.transferTo(path);
+
+        return path.toString();
     }
 
     @GetMapping("/{id}")
@@ -49,7 +65,6 @@ public class SongController {
     public List<SongDto> findAll() {
         return musicPlayerFacade.getAllSongs().stream().map(songMapper::toDto).toList();
     }
-
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteById(@PathVariable Long id) {
