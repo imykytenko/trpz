@@ -4,8 +4,7 @@ import com.example.music_player.iterator.Aggregate;
 import com.example.music_player.iterator.Iterator;
 import java.util.*;
 
-import com.example.music_player.iterator.SongIterator;
-import com.example.music_player.memento.PlaylistMemento;
+import com.example.music_player.iterator.PlaylistSongIterator;
 import com.example.music_player.visitor.Element;
 import com.example.music_player.visitor.Visitor;
 import jakarta.persistence.*;
@@ -24,25 +23,17 @@ public class Playlist implements Aggregate<Song>, Element {
     @Column(nullable = false)
     private String name;
 
-    @ManyToMany
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "playlist_song",
             joinColumns = @JoinColumn(name = "playlist_id"),
             inverseJoinColumns = @JoinColumn(name = "song_id")
     )
-    private List<Song> songs;
+    private List<Song> songs = new ArrayList<>();
 
     @Override
     public Iterator<Song> createIterator() {
-        return new SongIterator(songs);
-    }
-
-    public PlaylistMemento createMemento() {
-        return new PlaylistMemento(this.songs);
-    }
-
-    public void restoreFromMemento(PlaylistMemento memento) {
-        this.songs = memento.getSavedSongs();
+        return new PlaylistSongIterator(this.songs);
     }
 
     @Override

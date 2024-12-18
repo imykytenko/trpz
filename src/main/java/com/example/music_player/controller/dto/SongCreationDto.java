@@ -10,11 +10,4 @@ public class SongCreationDto {
     private double duration;
     private String format;
     private MultipartFile file;
-    public SongCreationDto(String title, String artist, double duration, String format, MultipartFile file) {
-        this.title = title;
-        this.artist = artist;
-        this.duration = duration;
-        this.format = format;
-        this.file = file;
-    }
 }
