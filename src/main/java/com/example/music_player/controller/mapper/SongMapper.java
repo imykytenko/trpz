@@ -8,10 +8,7 @@ import org.mapstruct.Mapper;
 @Mapper(componentModel = "spring")
 public interface SongMapper {
 
-    // Перетворення з сутності Song в DTO
     SongDto toDto(Song song);
 
-    // Перетворення з DTO в сутність Song
     Song toEntity(SongCreationDto songDto);
-
 }

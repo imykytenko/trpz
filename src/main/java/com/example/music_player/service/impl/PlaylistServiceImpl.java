@@ -1,12 +1,10 @@
 package com.example.music_player.service.impl;
 
-import com.example.music_player.command.AddSongCommand;
+import com.example.music_player.command.AddSongToPlaylistCommand;
 import com.example.music_player.command.Command;
 import com.example.music_player.command.PlaylistCommandInvoker;
-import com.example.music_player.command.RemoveSongCommand;
+import com.example.music_player.command.RemoveSongFromPlaylistCommand;
 import com.example.music_player.iterator.Iterator;
-import com.example.music_player.memento.PlaylistHistory;
-import com.example.music_player.memento.PlaylistMemento;
 import com.example.music_player.model.Playlist;
 import com.example.music_player.model.Song;
 import com.example.music_player.repository.PlaylistRepository;
@@ -18,10 +16,7 @@ import com.example.music_player.visitor.StatisticsVisitor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class PlaylistServiceImpl implements PlaylistService{
@@ -29,9 +24,9 @@ public class PlaylistServiceImpl implements PlaylistService{
     private final PlaylistRepository playlistRepository;
     @Autowired
     private final SongRepository songRepository;
+    private final Map<Long, Iterator<Song>> iterators = new HashMap<>();
     private final PlaylistCommandInvoker commandInvoker = new PlaylistCommandInvoker();
-    private final Map<Long, PlaylistHistory> playlistHistories = new HashMap<>();
-    private final StatisticsVisitor statisticsVisitor = new StatisticsVisitor();
+
     @Autowired
     public PlaylistServiceImpl(PlaylistRepository playlistRepository, SongRepository songRepository) {
         this.playlistRepository = playlistRepository;
@@ -69,24 +64,14 @@ public class PlaylistServiceImpl implements PlaylistService{
 
     @Override
     public void addSongToPlaylist(Long playlistId, Long songId) {
-        Playlist playlist = playlistRepository.findById(playlistId).orElse(null);
-        Song song = songRepository.findById(songId).orElse(null);
-        if (playlist != null && song != null) {
-            Command addSongCommand = new AddSongCommand(this, playlistId, songId);
-            commandInvoker.setCommand(addSongCommand);
-            commandInvoker.executeCommand();
-        }
+        Command addSongCommand = new AddSongToPlaylistCommand(playlistRepository, songRepository, playlistId, songId);
+        commandInvoker.executeCommand(addSongCommand);
     }
 
     @Override
     public void removeSongFromPlaylist(Long playlistId, Long songId) {
-        Playlist playlist = playlistRepository.findById(playlistId).orElse(null);
-        Song song = songRepository.findById(songId).orElse(null);
-        if (playlist != null && song != null) {
-            Command removeSongCommand = new RemoveSongCommand(this, playlistId, songId);
-            commandInvoker.setCommand(removeSongCommand);
-            commandInvoker.executeCommand();
-        }
+        Command removeSongCommand = new RemoveSongFromPlaylistCommand(playlistRepository, songRepository, playlistId, songId);
+        commandInvoker.executeCommand(removeSongCommand);
     }
 
     @Override
@@ -97,49 +82,45 @@ public class PlaylistServiceImpl implements PlaylistService{
             return null;
         }
 
-        List<Song> songsInPlaylist = new ArrayList<>();
-        Iterator<Song> songIterator = playlist.createIterator();
-
-        while (songIterator.hasNext()) {
-            songsInPlaylist.add(songIterator.next());
-        }
+        Set<Song> uniqueSongs = new HashSet<>(playlist.getSongs());
+        List<Song> songsInPlaylist = new ArrayList<>(uniqueSongs);
 
         return songsInPlaylist;
     }
 
     @Override
-    public void savePlaylistState(Long playlistId) {
-        Playlist playlist = getPlaylistById(playlistId);
+    public Song getNextSong(Long playlistId) {
+        Playlist playlist = playlistRepository.findById(playlistId)
+                .orElseThrow(() -> new NoSuchElementException("Playlist not found"));
 
-        if (playlist != null) {
-            PlaylistMemento memento = playlist.createMemento();
-            playlistHistories.putIfAbsent(playlistId, new PlaylistHistory());
-            playlistHistories.get(playlistId).addMemento(memento);
+        iterators.putIfAbsent(playlistId, playlist.createIterator());
+        Iterator<Song> iterator = iterators.get(playlistId);
+
+        if (!iterator.hasNext()) {
+            iterator.reset();
         }
+
+        return iterator.next();
     }
 
     @Override
-    public void restorePlaylistState(Long playlistId, int mementoIndex) {
+    public Map<String, Object> calculateStatistics(Long playlistId) {
         Playlist playlist = getPlaylistById(playlistId);
 
-        if (playlist != null) {
-            PlaylistHistory history = playlistHistories.get(playlistId);
-            PlaylistMemento memento = history.getMemento(mementoIndex);
-            playlist.restoreFromMemento(memento);
-            playlistRepository.save(playlist);
+        if (playlist == null) {
+            throw new NoSuchElementException("Playlist not found");
         }
+
+        List<Element> elements = new ArrayList<>();
+        elements.add(playlist);
+        MusicPlayer musicPlayer = new MusicPlayer(elements);
+
+        StatisticsVisitor visitor = new StatisticsVisitor();
+        musicPlayer.acceptVisitor(visitor);
+
+        Map<String, Object> statistics = new HashMap<>();
+        statistics.put("Кількість пісень", visitor.getTotalSongs());
+        statistics.put("Загальна тривалість", visitor.getTotalDuration());
+        return statistics;
     }
-    @Override
-    public void calculateStatistics(Long playlistId) {
-        Playlist playlist = getPlaylistById(playlistId);
-
-        if (playlist != null) {
-            List<Element> elements = new ArrayList<>();
-            elements.add(playlist);
-            MusicPlayer musicPlayer = new MusicPlayer(elements);
-
-            musicPlayer.acceptVisitor(statisticsVisitor);
-        }
-    }
-
 }

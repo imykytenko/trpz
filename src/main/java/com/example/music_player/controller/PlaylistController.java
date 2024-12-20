@@ -1,41 +1,66 @@
 package com.example.music_player.controller;
 
+import com.example.music_player.controller.dto.PlaylistCreationDto;
+import com.example.music_player.controller.dto.PlaylistDto;
+import com.example.music_player.controller.dto.PlaylistUpdateDto;
 import com.example.music_player.facade.MusicPlayerFacade;
+import com.example.music_player.controller.mapper.PlaylistMapper;
 import com.example.music_player.model.Playlist;
 import com.example.music_player.model.Song;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/playlists")
-public class PlaylistController{
+@RequiredArgsConstructor
+@CrossOrigin(origins = {"http://localhost:5173"})
+public class PlaylistController {
+
     @Autowired
     private MusicPlayerFacade musicPlayerFacade;
 
-    @PostMapping
-    public ResponseEntity<Playlist> createPlaylist(@RequestBody Playlist playlist) {
-        return new ResponseEntity<>(musicPlayerFacade.createPlaylist(playlist), HttpStatus.CREATED);
+    @Autowired
+    private PlaylistMapper playlistMapper;
+
+    @PostMapping("/add")
+    public ResponseEntity<PlaylistDto> createPlaylist(@RequestBody PlaylistCreationDto playlistDto) {
+        var playlist = musicPlayerFacade.createPlaylist(playlistMapper.toEntity(playlistDto));
+        return new ResponseEntity<>(playlistMapper.toDto(playlist), HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Playlist> getPlaylistById(@PathVariable Long id) {
+    public ResponseEntity<PlaylistDto> getPlaylistById(@PathVariable Long id) {
         Playlist playlist = musicPlayerFacade.getPlaylistById(id);
-        return playlist != null ? ResponseEntity.ok(playlist) : ResponseEntity.notFound().build();
+        return playlist != null ? ResponseEntity.ok(playlistMapper.toDto(playlist)) : ResponseEntity.notFound().build();
     }
 
     @GetMapping
-    public ResponseEntity<List<Playlist>> getAllPlaylists() {
-        return ResponseEntity.ok(musicPlayerFacade.getAllPlaylists());
+    public List<PlaylistDto> getAllPlaylists() {
+        return musicPlayerFacade.getAllPlaylists().stream().map(playlistMapper::toDto).toList();
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Playlist> updatePlaylist(@PathVariable Long id, @RequestBody Playlist playlist) {
-        Playlist updatedPlaylist = musicPlayerFacade.updatePlaylist(id, playlist);
-        return updatedPlaylist != null ? ResponseEntity.ok(updatedPlaylist) : ResponseEntity.notFound().build();
+    public ResponseEntity<PlaylistDto> updatePlaylist(@PathVariable Long id, @RequestBody PlaylistUpdateDto playlistDto) {
+        var playlist = musicPlayerFacade.updatePlaylist(id, playlistMapper.update(playlistDto));
+        return playlist != null ? ResponseEntity.ok(playlistMapper.toDto(playlist)) : ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/{id}/songs")
+    public ResponseEntity<List<Song>> getSongsInPlaylist(@PathVariable Long id) {
+        List<Song> songsInPlaylist = musicPlayerFacade.getSongsInPlaylist(id);
+
+        if (songsInPlaylist != null) {
+            return ResponseEntity.ok(songsInPlaylist);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/{id}")
@@ -56,31 +81,19 @@ public class PlaylistController{
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/{id}/songs")
-    public ResponseEntity<List<Song>> getSongsInPlaylist(@PathVariable Long id) {
-        List<Song> songsInPlaylist = musicPlayerFacade.getSongsInPlaylist(id);
-
-        if (songsInPlaylist != null) {
-            return ResponseEntity.ok(songsInPlaylist);
-        } else {
-            return ResponseEntity.notFound().build();
+    @GetMapping("/{id}/next-song")
+    public ResponseEntity<Song> getNextSong(@PathVariable Long id) {
+        try {
+            Song nextSong = musicPlayerFacade.getNextSong(id);
+            return ResponseEntity.ok(nextSong);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
     }
 
-    @PostMapping("/{playlistId}/save-state")
-    public ResponseEntity<Void> savePlaylistState(@PathVariable Long playlistId) {
-        musicPlayerFacade.savePlaylistState(playlistId);
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping("/{playlistId}/restore-state/{index}")
-    public ResponseEntity<Void> restorePlaylistState(@PathVariable Long playlistId, @PathVariable int index) {
-        musicPlayerFacade.restorePlaylistState(playlistId, index);
-        return ResponseEntity.ok().build();
-    }
-
     @GetMapping("/{playlistId}/statistics")
-    public void calculateStatistics(@PathVariable Long playlistId) {
-        musicPlayerFacade.calculatePlaylistStatistics(playlistId);
+    public ResponseEntity<Map<String, Object>> calculateStatistics(@PathVariable Long playlistId) {
+        Map<String, Object> statistics = musicPlayerFacade.calculateStatistics(playlistId);
+        return ResponseEntity.ok(statistics);
     }
 }

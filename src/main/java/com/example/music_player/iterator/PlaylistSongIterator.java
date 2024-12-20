@@ -3,12 +3,11 @@ package com.example.music_player.iterator;
 import com.example.music_player.model.Song;
 import java.util.List;
 import java.util.NoSuchElementException;
-
-public class SongIterator implements Iterator<Song>{
+public class PlaylistSongIterator implements Iterator<Song>{
     private final List<Song> songs;
     private int position;
 
-    public SongIterator(List<Song> songs) {
+    public PlaylistSongIterator(List<Song> songs) {
         this.songs = songs;
     }
 
@@ -23,5 +22,9 @@ public class SongIterator implements Iterator<Song>{
             throw new NoSuchElementException("No more songs in the playlist.");
         }
         return songs.get(position++);
+    }
+    @Override
+    public void reset() {
+        position = 0;
     }
 }

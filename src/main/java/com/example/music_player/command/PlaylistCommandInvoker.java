@@ -1,13 +1,12 @@
 package com.example.music_player.command;
 
+
+import lombok.Setter;
+
+@Setter
 public class PlaylistCommandInvoker {
-    private Command command;
 
-    public void setCommand(Command command) {
-        this.command = command;
-    }
-
-    public void executeCommand() {
+    public void executeCommand(Command command) {
         command.execute();
     }
 }
