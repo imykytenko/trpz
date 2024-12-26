@@ -2,9 +2,13 @@ package com.example.music_player.model;
 
 import com.example.music_player.visitor.Element;
 import com.example.music_player.visitor.Visitor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -23,11 +27,12 @@ public class Song implements Element {
 
     private double duration;
 
-    @Lob
-    private byte[] fileData;
+    private String fileUrl;
 
     private String format;
-
+    @ManyToMany(mappedBy = "songs")
+    @JsonIgnore
+    private List<Playlist> playlists = new ArrayList<>();
 
     @Override
     public void accept(Visitor visitor) {

@@ -9,5 +9,5 @@ public class SongDto {
     private String artist;
     private double duration;
     private String format;
-
+    private String fileUrl;
 }
